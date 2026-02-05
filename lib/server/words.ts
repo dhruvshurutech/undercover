@@ -6,6 +6,7 @@ export type WordDef = {
 export type WordSet = {
   civilian: WordDef;
   undercover: WordDef[]; // Array for multiple undercover variations
+  categories?: string[];
 };
 
 const WORD_SETS: WordSet[] = [
@@ -15,6 +16,7 @@ const WORD_SETS: WordSet[] = [
       description:
         "A hot drink made by infusing dried crushed leaves in boiling water.",
     },
+    categories: ["drinks", "beverages"],
     undercover: [
       {
         word: "Coffee",
@@ -39,6 +41,7 @@ const WORD_SETS: WordSet[] = [
       description:
         "A social networking site that makes it easy to connect and share with family and friends.",
     },
+    categories: ["social media", "technology"],
     undercover: [
       {
         word: "Twitter",
@@ -60,6 +63,7 @@ const WORD_SETS: WordSet[] = [
       word: "Apple",
       description: "A round fruit with red or green skin and a whitish inside.",
     },
+    categories: ["fruit", "food"],
     undercover: [
       {
         word: "Orange",
@@ -83,6 +87,7 @@ const WORD_SETS: WordSet[] = [
       word: "Sun",
       description: "The star around which the earth orbits.",
     },
+    categories: ["space", "astronomy"],
     undercover: [
       {
         word: "Moon",
@@ -107,6 +112,7 @@ const WORD_SETS: WordSet[] = [
       description:
         "A series of railway carriages or wagons moved as a unit by a locomotive.",
     },
+    categories: ["transportation", "travel"],
     undercover: [
       {
         word: "Subway",
@@ -129,6 +135,7 @@ const WORD_SETS: WordSet[] = [
       description:
         "A stringed musical instrument, with a fretted fingerboard, typically incurved sides, and six or twelve strings, played by plucking or strumming.",
     },
+    categories: ["music", "instruments"],
     undercover: [
       {
         word: "Violin",
@@ -148,7 +155,24 @@ const WORD_SETS: WordSet[] = [
   },
 ];
 
-export function getStaticWordSet(): WordSet {
-  const index = Math.floor(Math.random() * WORD_SETS.length);
-  return WORD_SETS[index];
+function normalizeCategory(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+export function getStaticWordSet(categories?: string[]): WordSet {
+  if (!categories || categories.length === 0) {
+    const index = Math.floor(Math.random() * WORD_SETS.length);
+    return WORD_SETS[index];
+  }
+
+  const wanted = categories.map(normalizeCategory).filter(Boolean);
+  const filtered = WORD_SETS.filter((set) => {
+    if (!set.categories || set.categories.length === 0) return false;
+    const setCategories = set.categories.map(normalizeCategory);
+    return wanted.some((cat) => setCategories.includes(cat));
+  });
+
+  const pool = filtered.length > 0 ? filtered : WORD_SETS;
+  const index = Math.floor(Math.random() * pool.length);
+  return pool[index];
 }

@@ -56,14 +56,33 @@ const PROVIDERS = [
   },
 ];
 
-export async function generateWordSet(): Promise<WordSet> {
+function normalizeCategory(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+export async function generateWordSet(
+  categories?: string[],
+): Promise<WordSet> {
+  const cleanedCategories =
+    categories?.map(normalizeCategory).filter(Boolean) ?? [];
+  const categoryLine =
+    cleanedCategories.length > 0
+      ? `- Category must be within: ${cleanedCategories.join(", ")}.\n`
+      : "";
+
   const prompt = `
-    Generate a set of words for the game "Undercover".
-    - The "Civilian" word and the "Undercover" word must be distinct but related (same category, similar context).
-    - They should NOT be synonyms, but clearly different objects/concepts that could be confused in vague conversation.
-    - Provide a short, clear description for each.
-    - Examples of good pairs: Tea / Coffee, Apple / Orange, Train / Bus, Sun / Moon.
-    - Examples of BAD pairs: Tea / Car (too different), Big / Large (synonyms).
+    You generate ONE word set for the party game "Undercover".
+    ${categoryLine}
+    Requirements:
+    - Pick a single category and stick to it. If a category list is provided, choose from it.
+    - Civilian and Undercover must be in the same category and reasonably confusable in casual conversation, but NOT synonyms and NOT identical.
+    - Use common, concrete nouns. Prefer similar places, concepts, and actions.
+    - Keep each word to 1-2 words max (no punctuation). Avoid plural vs singular pairs.
+    - Descriptions must be short (6-12 words), plain English, no commas, and must not repeat the word.
+    - Undercover variations: include 1-2 distinct alternatives if both are strong; otherwise include 1.
+    - Do NOT include any extra text outside the JSON schema output.
+    Examples (good): Tea / Coffee, Fanta / Coca-Cola, Kiss / Hug, Singapore / Hong Kong
+    Examples (bad): Tea / Car (too different), Big / Large (synonyms), Kiss / Kissing (redundant)
   `;
 
   let lastError: unknown = null;
@@ -94,7 +113,9 @@ export async function generateWordSet(): Promise<WordSet> {
         `Successfully generated word set using ${providerConfig.name}`,
       );
       console.log(JSON.stringify(result.object));
-      return result.object;
+      return cleanedCategories.length > 0
+        ? { ...result.object, categories: cleanedCategories }
+        : result.object;
     } catch (error) {
       console.error(
         `Failed to generate word set using ${providerConfig.name}:`,

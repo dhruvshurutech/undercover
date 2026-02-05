@@ -3,7 +3,7 @@
 import { useGameStore } from "@/lib/store";
 import { Player } from "@/lib/game-logic";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -14,10 +14,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skull, Gavel, CheckCircle } from "lucide-react";
+import { Skull, Gavel } from "lucide-react";
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 
 export function Voting() {
   const {
@@ -34,6 +33,7 @@ export function Voting() {
   const [showMrWhiteGuess, setShowMrWhiteGuess] = useState(false);
   const [mrWhiteGuess, setMrWhiteGuess] = useState("");
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const prefersReducedMotion = useReducedMotion();
 
   const alivePlayers = players.filter((p) => p.isAlive);
 
@@ -121,27 +121,46 @@ export function Voting() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-[80vh] w-full p-4 space-y-6 bg-destructive/5 rounded-3xl border-2 border-destructive/10">
+    <div className="flex flex-col items-center justify-start min-h-[80vh] w-full p-2 sm:p-4 space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-3xl font-bold flex items-center justify-center gap-2">
-          <Gavel className="h-8 w-8" /> Voting Time
+        <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground">
+          Tribunal
+        </p>
+        <h2 className="text-3xl sm:text-4xl font-[var(--font-display)] tracking-[0.2em] uppercase flex items-center justify-center gap-2">
+          <Gavel className="h-8 w-8" /> Verdict
         </h2>
         <p className="text-muted-foreground">
-          Who is the intruder? Tap to eliminate.
+          Identify the infiltrator and mark them for removal.
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 w-full max-w-2xl">
+      <motion.div
+        className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-3xl"
+        initial="hidden"
+        animate="visible"
+        variants={{
+          hidden: { opacity: 0 },
+          visible: {
+            opacity: 1,
+            transition: prefersReducedMotion
+              ? { duration: 0.01 }
+              : { staggerChildren: 0.05, delayChildren: 0.05 },
+          },
+        }}
+      >
         {alivePlayers.map((player) => (
           <motion.div
             key={player.id}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            variants={{
+              hidden: { opacity: 0, y: 8, scale: 0.98 },
+              visible: { opacity: 1, y: 0, scale: 1 },
+            }}
+            whileHover={prefersReducedMotion ? undefined : { scale: 1.02 }}
+            whileTap={prefersReducedMotion ? undefined : { scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 220, damping: 18 }}
           >
             <Card
-              className="cursor-pointer hover:bg-destructive/10 transition-colors border-2 hover:border-destructive/50"
+              className="cursor-pointer dossier-panel transition-colors border-2 border-transparent hover:border-destructive/50"
               onClick={() => handleSelect(player)}
             >
               <CardContent className="flex items-center justify-between p-4">
@@ -154,14 +173,16 @@ export function Voting() {
             </Card>
           </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
-        <DialogContent>
+        <DialogContent className="dossier-panel">
           <DialogHeader>
-            <DialogTitle>Eliminate {selectedPlayer?.name}?</DialogTitle>
+            <DialogTitle className="uppercase tracking-wider">
+              Eliminate {selectedPlayer?.name}?
+            </DialogTitle>
             <DialogDescription>
-              Are you sure? This cannot be undone.
+              Are you sure? This decision is final.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
@@ -179,7 +200,7 @@ export function Voting() {
         open={showMrWhiteGuess}
         onOpenChange={(open) => !open && setShowMrWhiteGuess(false)}
       >
-        <DialogContent>
+        <DialogContent className="dossier-panel">
           <DialogHeader>
             <DialogTitle className="text-destructive">
               Mr. White Detected!
@@ -190,7 +211,7 @@ export function Voting() {
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <Label>Guess the word</Label>
+            <Label className="mb-2">Guess the word</Label>
             <Input
               value={mrWhiteGuess}
               onChange={(e) => setMrWhiteGuess(e.target.value)}
@@ -209,7 +230,7 @@ export function Voting() {
       </Dialog>
 
       <Dialog open={!!alertMessage} onOpenChange={() => setAlertMessage(null)}>
-        <DialogContent>
+        <DialogContent className="dossier-panel">
           <DialogHeader>
             <DialogTitle>Game Update</DialogTitle>
             <DialogDescription>{alertMessage}</DialogDescription>

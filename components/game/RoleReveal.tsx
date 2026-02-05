@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Eye, EyeOff, CheckCircle } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useGameStore } from "@/lib/store";
@@ -52,7 +52,7 @@ export function RoleReveal() {
   if (!currentPlayer) return null;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center space-y-8">
+    <div className="flex flex-col items-center justify-center min-h-[60vh] p-2 sm:p-4 text-center space-y-8">
       <AnimatePresence mode="wait">
         {!isRevealed ? (
           <motion.div
@@ -62,19 +62,20 @@ export function RoleReveal() {
             exit={{ opacity: 0, y: -20 }}
             className="space-y-6"
           >
-            <div className="text-6xl animate-bounce">📱</div>
-            <h2 className="text-3xl font-bold tracking-tight">
+            <div className="text-6xl animate-bounce">📁</div>
+            <p className="stamp inline-block">Eyes Only</p>
+            <h2 className="text-2xl sm:text-3xl font-[var(--font-display)] tracking-[0.2em] uppercase">
               Pass to {currentPlayer.name}
             </h2>
             <p className="text-muted-foreground">
-              Keep your screen hidden from others!
+              Shield the screen. Only the assigned agent should read the file.
             </p>
             <Button
               size="lg"
-              className="mt-8 text-xl px-8 py-6 w-full max-w-xs"
+              className="mt-8 text-xl px-8 py-6 w-full max-w-xs uppercase tracking-wider"
               onClick={() => setIsRevealed(true)}
             >
-              View your Word
+              Open Dossier
             </Button>
           </motion.div>
         ) : (
@@ -84,14 +85,14 @@ export function RoleReveal() {
             animate={{ opacity: 1, scale: 1 }}
             className="w-full max-w-sm"
           >
-            <Card className="border-2 border-primary/20 shadow-xl">
+            <Card className="dossier-panel border-2 border-primary/20 shadow-xl">
               <CardContent className="pt-10 pb-10 flex flex-col items-center gap-6">
                 <div className="space-y-2 text-center">
-                  <span className="text-sm font-uppercase text-muted-foreground tracking-widest">
-                    YOUR SECRET WORD
+                  <span className="text-xs uppercase text-muted-foreground font-bold tracking-[0.4em]">
+                    Classified Term
                   </span>
 
-                  <div className="text-4xl font-black text-primary p-6 bg-secondary/30 rounded-xl min-w-[200px]">
+                  <div className="text-4xl font-black text-primary p-6 bg-secondary/40 rounded-xl min-w-[200px]">
                     {currentPlayer.word === null ? (
                       <span className="text-destructive">NO WORD</span>
                     ) : (
@@ -126,7 +127,7 @@ export function RoleReveal() {
 
                 <Button
                   onClick={handleNext}
-                  className="w-full mt-4"
+                  className="w-full mt-4 uppercase tracking-widest"
                   variant="default"
                 >
                   <CheckCircle className="mr-2 h-4 w-4" /> Got it

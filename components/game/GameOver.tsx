@@ -3,52 +3,62 @@
 import { useGameStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Crown, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 
 export function GameOver() {
   const { winner, players, civilianWord, undercoverWord, resetGame } =
     useGameStore();
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] p-4 space-y-8 animate-in fade-in zoom-in duration-500">
-      <div className="text-center space-y-4">
-        <Crown className="h-20 w-20 mx-auto text-yellow-500 animate-bounce" />
-        <h1 className="text-5xl font-black tracking-tighter">
+    <div className="flex flex-col items-center justify-center min-h-[80vh] p-2 sm:p-4 space-y-8 animate-in fade-in zoom-in duration-500">
+      <div className="text-center space-y-3">
+        <p className="stamp inline-block">Case Closed</p>
+        <h1 className="text-4xl sm:text-6xl font-[var(--font-display)] tracking-[0.2em] uppercase">
           {winner === "Civilians" && (
-            <span className="text-green-500">Civilians Win!</span>
+            <span className="text-emerald-500">Civilians Win</span>
           )}
           {winner === "Infiltrators" && (
-            <span className="text-red-500">Infiltrators Win!</span>
+            <span className="text-red-500">Infiltrators Win</span>
           )}
           {winner === "MrWhite" && (
-            <span className="text-purple-500">Mr. White Wins!</span>
+            <span className="text-amber-500">Mr. White Wins</span>
           )}
         </h1>
-        <p className="text-xl text-muted-foreground">The game is over.</p>
+        <p className="text-muted-foreground">
+          The operation has concluded. File the final report.
+        </p>
       </div>
 
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-2xl dossier-panel">
         <CardHeader>
-          <CardTitle>Secret Words</CardTitle>
+          <CardTitle className="uppercase tracking-wider">
+            Classified Terms
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex justify-between items-center border-b pb-2">
-            <span className="font-semibold text-green-600">Civilians</span>
+          <div className="flex justify-between items-center border-b border-dashed pb-3">
+            <span className="font-semibold text-emerald-500 uppercase tracking-wider text-sm">
+              Civilians
+            </span>
             <span className="font-mono text-lg">{civilianWord?.word}</span>
           </div>
           <div className="flex justify-between items-center pb-2">
-            <span className="font-semibold text-red-600">Undercover</span>
+            <span className="font-semibold text-red-500 uppercase tracking-wider text-sm">
+              Undercover
+            </span>
             <span className="font-mono text-lg">{undercoverWord?.word}</span>
           </div>
         </CardContent>
       </Card>
 
-      <div className="w-full max-w-md grid gap-3">
-        <h3 className="font-bold text-lg px-2">Player Roles</h3>
+      <div className="w-full max-w-2xl grid gap-3">
+        <h3 className="font-semibold text-sm uppercase tracking-[0.4em] px-2 text-muted-foreground">
+          Roster Report
+        </h3>
         {players.map((p) => (
           <div
             key={p.id}
-            className="flex items-center justify-between bg-secondary/20 p-3 rounded-lg"
+            className="flex items-center justify-between dossier-panel p-3 rounded-lg"
           >
             <div className="flex items-center gap-3">
               <span className="text-2xl">{p.avatar}</span>
@@ -59,12 +69,12 @@ export function GameOver() {
               </span>
             </div>
             <span
-              className={`text-sm font-bold ${
+              className={`text-sm font-bold uppercase tracking-wider ${
                 p.role === "Civilian"
-                  ? "text-green-600"
+                  ? "text-emerald-500"
                   : p.role === "Undercover"
-                    ? "text-red-600"
-                    : "text-purple-600"
+                    ? "text-red-500"
+                    : "text-amber-500"
               }`}
             >
               {p.role}
@@ -73,8 +83,12 @@ export function GameOver() {
         ))}
       </div>
 
-      <Button size="lg" className="w-full max-w-md text-lg" onClick={resetGame}>
-        <RotateCcw className="mr-2 h-5 w-5" /> Play Again
+      <Button
+        size="lg"
+        className="w-full max-w-2xl text-lg uppercase tracking-widest"
+        onClick={resetGame}
+      >
+        <RotateCcw className="mr-2 h-5 w-5" /> Run It Back
       </Button>
     </div>
   );
