@@ -54,15 +54,27 @@ const PROVIDERS = [
     baseURL: "https://openrouter.ai/api/v1",
     model: "z-ai/glm-4.6v",
   },
+  {
+    id: "google/gemini-3-flash-preview",
+    name: "Google Gemini 3 Flash",
+    apiKeyEnvVar: "OPENROUTER_API_KEY",
+    baseURL: "https://openrouter.ai/api/v1",
+    model: "google/gemini-3-flash-preview",
+  },
+  {
+    id: "openai/gpt-5-mini",
+    name: "Open AI GPT-5 Mini",
+    apiKeyEnvVar: "OPENROUTER_API_KEY",
+    baseURL: "https://openrouter.ai/api/v1",
+    model: "openai/gpt-5-mini",
+  },
 ];
 
 function normalizeCategory(value: string): string {
   return value.trim().toLowerCase();
 }
 
-export async function generateWordSet(
-  categories?: string[],
-): Promise<WordSet> {
+export async function generateWordSet(categories?: string[]): Promise<WordSet> {
   const cleanedCategories =
     categories?.map(normalizeCategory).filter(Boolean) ?? [];
   const categoryLine =
@@ -70,20 +82,41 @@ export async function generateWordSet(
       ? `- Category must be within: ${cleanedCategories.join(", ")}.\n`
       : "";
 
-  const prompt = `
-    You generate ONE word set for the party game "Undercover".
-    ${categoryLine}
-    Requirements:
-    - Pick a single category and stick to it. If a category list is provided, choose from it.
-    - Civilian and Undercover must be in the same category and reasonably confusable in casual conversation, but NOT synonyms and NOT identical.
-    - Use common, concrete nouns. Prefer similar places, concepts, and actions.
-    - Keep each word to 1-2 words max (no punctuation). Avoid plural vs singular pairs.
-    - Descriptions must be short (6-12 words), plain English, no commas, and must not repeat the word.
-    - Undercover variations: include 1-2 distinct alternatives if both are strong; otherwise include 1.
-    - Do NOT include any extra text outside the JSON schema output.
-    Examples (good): Tea / Coffee, Fanta / Coca-Cola, Kiss / Hug, Singapore / Hong Kong
-    Examples (bad): Tea / Car (too different), Big / Large (synonyms), Kiss / Kissing (redundant)
-  `;
+  const prompt = `Generate ONE word pair for the party game "Undercover".
+  Game Context: In Undercover, most players receive the "Civilian" word, while 1-2 players secretly get the "Undercover" word.
+  Players give clues about their word without saying it directly.
+  The goal: Undercover words must be similar enough that their clues don't immediately expose them, but different enough that careful players can spot the distinction.
+  
+  ${categoryLine}
+  - Related concepts that overlap in descriptions but aren't interchangeable
+  - Common, recognizable nouns (not abstract or obscure)
+  - 1-2 words each, no punctuation
+  - NOT synonyms, NOT plural/singular variants, NOT the same thing
+  
+  WHAT MAKES GOOD PAIRS:
+  ✓ Share properties/contexts: "Tea/Coffee" (hot beverages, morning drinks)
+  ✓ Often compared: "Fanta/Coca-Cola" (orange vs cola sodas)
+  ✓ Similar actions: "Kiss/Hug" (physical affection, different intensity)
+  ✓ Related locations: "Singapore/Hong Kong" (Asian city-states, different countries)
+  ✓ Overlapping uses: "Couch/Bed" (furniture for lying down, different purposes)
+
+  WHAT MAKES BAD PAIRS:
+  ✗ Unrelated: "Tea/Car" (players would instantly know they're different)
+  ✗ Synonyms: "Big/Large" (clues would be identical)
+  ✗ Too similar: "Cat/Kitten" (one is just younger)
+  ✗ Too obvious: "Hot/Cold" (direct opposites are too easy to detect)
+
+  DESCRIPTIONS:
+  - 6-12 words of plain English
+  - Must NOT contain the word itself
+  - Should hint at the concept without giving it away
+  - Example for "Coffee": "A hot caffeinated drink often consumed in the morning"
+
+  UNDERCOVER ALTERNATIVES:
+  - Provide 1-2 alternatives only if they're equally strong and distinct
+  - Otherwise just provide 1
+
+  Output only valid JSON matching the schema.`;
 
   let lastError: unknown = null;
 

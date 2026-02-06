@@ -49,7 +49,7 @@ export const useGameStore = create<GameState>()(
       settings: {
         civilianCount: 0,
         undercoverCount: 0,
-        mrWhiteCount: 1,
+        mrWhiteCount: 0,
         blindMode: true,
       },
       phase: "SETUP",

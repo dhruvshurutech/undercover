@@ -60,9 +60,13 @@ export default function Home() {
       <div className="absolute inset-0 dossier-bg" />
       <div className="absolute inset-0 opacity-40 dossier-grid" />
       <div className="relative z-10 flex flex-col min-h-screen py-6 sm:py-10">
-        <header className="w-full max-w-4xl mx-auto px-4 sm:px-6 flex flex-col gap-4">
+        <header className="w-full max-w-4xl mx-auto px-4 sm:px-6 flex flex-col gap-4 relative">
+          <div className="absolute top-3 right-4 sm:static sm:ml-0">
+            <ModeToggle />
+          </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full border border-border/60 bg-secondary/70 flex items-center justify-center font-black">
                 U
               </div>
@@ -73,6 +77,32 @@ export default function Home() {
                 <h1 className="text-3xl sm:text-4xl font-[var(--font-display)] tracking-[0.12em] uppercase">
                   Undercover
                 </h1>
+              </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-[0.2em] text-muted-foreground sm:hidden">
+                <span className="stamp">Classified</span>
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={phase}
+                    className="px-3 py-1 rounded-full border border-border/60 bg-secondary/60"
+                    initial={
+                      prefersReducedMotion
+                        ? { opacity: 0 }
+                        : { opacity: 0, y: 6 }
+                    }
+                    animate={
+                      prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }
+                    }
+                    exit={
+                      prefersReducedMotion
+                        ? { opacity: 0 }
+                        : { opacity: 0, y: -6 }
+                    }
+                    transition={{ duration: 0.2 }}
+                  >
+                    {phase.replace("_", " ")}
+                  </motion.span>
+                </AnimatePresence>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
@@ -94,12 +124,9 @@ export default function Home() {
                   Quit Mission
                 </Button>
               )}
-              <div className="ml-auto sm:ml-0 flex items-center">
-                <ModeToggle />
-              </div>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-[0.2em] text-muted-foreground -mt-1">
+          <div className="hidden sm:flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-[0.2em] text-muted-foreground -mt-1">
             <span className="stamp">Classified</span>
             <AnimatePresence mode="wait">
               <motion.span

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,7 @@ export function SetupForm() {
     storedPlayers.length > 0 ? storedPlayers.map((p) => p.name) : ["", "", ""],
   );
   const [undercoverCount, setUndercoverCount] = useState(1);
-  const [mrWhiteCount, setMrWhiteCount] = useState(1);
+  const [mrWhiteCount, setMrWhiteCount] = useState(0);
   const [blindMode, setBlindMode] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
@@ -75,6 +75,17 @@ export function SetupForm() {
     players.every((p) => p.trim().length > 0) &&
     civilianCount > 0 &&
     playerCount >= 3;
+
+  useEffect(() => {
+    const maxMrWhite = Math.max(0, playerCount - undercoverCount - 1);
+    const maxUndercover = Math.max(1, playerCount - mrWhiteCount - 1);
+    if (mrWhiteCount > maxMrWhite) {
+      setMrWhiteCount(maxMrWhite);
+    }
+    if (undercoverCount > maxUndercover) {
+      setUndercoverCount(maxUndercover);
+    }
+  }, [playerCount, undercoverCount, mrWhiteCount]);
 
   const { refetch, isFetching } = useQuery({
     queryKey: ["wordSet", categories],
@@ -208,7 +219,7 @@ export function SetupForm() {
               <Slider
                 value={[undercoverCount]}
                 min={1}
-                max={Math.floor(playerCount / 2)}
+                max={Math.max(1, playerCount - mrWhiteCount - 1)}
                 step={1}
                 onValueChange={(vals) => setUndercoverCount(vals[0])}
               />
@@ -226,7 +237,7 @@ export function SetupForm() {
               <Slider
                 value={[mrWhiteCount]}
                 min={0}
-                max={Math.max(0, playerCount - undercoverCount - 2)}
+                max={Math.max(0, playerCount - undercoverCount - 1)}
                 step={1}
                 onValueChange={(vals) => setMrWhiteCount(vals[0])}
               />
