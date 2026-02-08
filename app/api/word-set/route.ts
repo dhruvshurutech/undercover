@@ -37,24 +37,39 @@ function parseSource(request: Request): "ai" | "files" {
   return raw === "files" ? "files" : "ai";
 }
 
+function isAiEnabled() {
+  return (
+    process.env.ENABLE_AI_FEATURE === "true" &&
+    process.env.NEXT_PUBLIC_ENABLE_AI_FEATURE === "true"
+  );
+}
+
 export async function GET(request: Request) {
   const categories = parseCategories(request);
   const excludePairs = parseExcludePairs(request);
   const source = parseSource(request);
+  const aiEnabled = isAiEnabled();
   try {
-    if (source === "files") {
+    if (source === "files" || !aiEnabled) {
       const wordSet = getStaticWordSet(categories, excludePairs);
-      return NextResponse.json(wordSet);
+      return NextResponse.json({ ...wordSet, meta: { source: "files" } });
     }
     const wordSet = await generateWordSet(categories, excludePairs);
-    return NextResponse.json(wordSet);
+    return NextResponse.json({ ...wordSet, meta: { source: "ai" } });
   } catch (error) {
     console.error(
       "AI word generation failed, falling back to static list:",
       error,
     );
     const wordSet = getStaticWordSet(categories, excludePairs);
-    return NextResponse.json(wordSet);
+    return NextResponse.json({
+      ...wordSet,
+      meta: {
+        source: "files",
+        fallback: true,
+        error: error instanceof Error ? error.message : "AI generation failed",
+      },
+    });
   }
 }
 
@@ -64,20 +79,28 @@ export async function POST(request: Request) {
   const excludePairs = body.excludePairs ?? [];
   const source = body.source ?? "ai";
   const prompt = body.prompt;
+  const aiEnabled = isAiEnabled();
 
   try {
-    if (source === "files") {
+    if (source === "files" || !aiEnabled) {
       const wordSet = getStaticWordSet(categories, excludePairs);
-      return NextResponse.json(wordSet);
+      return NextResponse.json({ ...wordSet, meta: { source: "files" } });
     }
     const wordSet = await generateWordSet(categories, excludePairs, prompt);
-    return NextResponse.json(wordSet);
+    return NextResponse.json({ ...wordSet, meta: { source: "ai" } });
   } catch (error) {
     console.error(
       "AI word generation failed, falling back to static list:",
       error,
     );
     const wordSet = getStaticWordSet(categories, excludePairs);
-    return NextResponse.json(wordSet);
+    return NextResponse.json({
+      ...wordSet,
+      meta: {
+        source: "files",
+        fallback: true,
+        error: error instanceof Error ? error.message : "AI generation failed",
+      },
+    });
   }
 }

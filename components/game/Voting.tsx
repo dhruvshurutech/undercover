@@ -33,6 +33,7 @@ export function Voting() {
   const [showMrWhiteGuess, setShowMrWhiteGuess] = useState(false);
   const [mrWhiteGuess, setMrWhiteGuess] = useState("");
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const [pendingNextRound, setPendingNextRound] = useState(false);
   const prefersReducedMotion = useReducedMotion();
 
   const alivePlayers = players.filter((p) => p.isAlive);
@@ -94,7 +95,7 @@ export function Voting() {
     if (!gameOver) {
       // Provide role feedback? Usually yes.
       setAlertMessage(`${selectedPlayer.name} was ${selectedPlayer.role}!`);
-      startNextRound();
+      setPendingNextRound(true);
     }
     setShowConfirm(false);
     setSelectedPlayer(null);
@@ -114,7 +115,7 @@ export function Voting() {
       setAlertMessage(`Wrong! The word was ${civilianWord?.word}.`);
       const gameOver = checkWinConditions();
       if (!gameOver) {
-        startNextRound();
+        setPendingNextRound(true);
       }
     }
     setShowMrWhiteGuess(false);
@@ -229,14 +230,35 @@ export function Voting() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!alertMessage} onOpenChange={() => setAlertMessage(null)}>
+      <Dialog
+        open={!!alertMessage}
+        onOpenChange={(open) => {
+          if (!open) {
+            setAlertMessage(null);
+            if (pendingNextRound) {
+              setPendingNextRound(false);
+              startNextRound();
+            }
+          }
+        }}
+      >
         <DialogContent className="dossier-panel">
           <DialogHeader>
             <DialogTitle>Game Update</DialogTitle>
             <DialogDescription>{alertMessage}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button onClick={() => setAlertMessage(null)}>OK</Button>
+            <Button
+              onClick={() => {
+                setAlertMessage(null);
+                if (pendingNextRound) {
+                  setPendingNextRound(false);
+                  startNextRound();
+                }
+              }}
+            >
+              OK
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

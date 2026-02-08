@@ -29,6 +29,7 @@ interface GameState {
     prompt: string;
   };
   categoryPreferences: string[];
+  wordSourcePreference: "ai" | "files";
 
   // Actions
   setPhase: (phase: GamePhase) => void;
@@ -40,6 +41,7 @@ interface GameState {
   addRecentPair: (pairKey: string) => void;
   setAiPreferences: (prefs: { prompt: string }) => void;
   setCategoryPreferences: (categories: string[]) => void;
+  setWordSourcePreference: (source: "ai" | "files") => void;
   eliminatePlayer: (playerId: string) => void;
   nextTurn: () => void;
   startNextRound: () => void;
@@ -71,6 +73,7 @@ export const useGameStore = create<GameState>()(
         prompt: "",
       },
       categoryPreferences: [],
+      wordSourcePreference: "files",
 
       setPhase: (phase) => set({ phase }),
 
@@ -111,6 +114,11 @@ export const useGameStore = create<GameState>()(
       setCategoryPreferences: (categories) =>
         set({
           categoryPreferences: categories,
+        }),
+
+      setWordSourcePreference: (source) =>
+        set({
+          wordSourcePreference: source,
         }),
 
       eliminatePlayer: (playerId) => {

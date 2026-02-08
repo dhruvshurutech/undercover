@@ -29,9 +29,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useGameStore } from "@/lib/store";
 import { LoadingScreen } from "./LoadingScreen";
-import { makePairKey } from "@/lib/words";
+import { makePairKey, WordSet } from "@/lib/words";
+import { useToast } from "@/components/ui/toast";
 
 export function SetupForm() {
+  const aiEnabled = process.env.NEXT_PUBLIC_ENABLE_AI_FEATURE === "true";
+  const { push } = useToast();
   const startGame = useGameStore((state) => state.startGame);
   const recentPairs = useGameStore((state) => state.recentPairs);
   const addRecentPair = useGameStore((state) => state.addRecentPair);
@@ -42,6 +45,12 @@ export function SetupForm() {
   );
   const setCategoryPreferences = useGameStore(
     (state) => state.setCategoryPreferences,
+  );
+  const wordSourcePreference = useGameStore(
+    (state) => state.wordSourcePreference,
+  );
+  const setWordSourcePreference = useGameStore(
+    (state) => state.setWordSourcePreference,
   );
 
   const storedPlayers = useGameStore((state) => state.players);
@@ -54,9 +63,12 @@ export function SetupForm() {
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<string[]>(categoryPreferences);
   const [categoryInput, setCategoryInput] = useState("");
-  const [wordSource, setWordSource] = useState<"ai" | "files">("ai");
+  const [wordSource, setWordSource] = useState<"ai" | "files">(
+    aiEnabled ? wordSourcePreference : "files",
+  );
   const [aiPrompt, setAiPrompt] = useState(aiPreferences.prompt);
   const [showPrompt, setShowPrompt] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
 
   const addPlayer = () => setPlayers([...players, ""]);
   const removePlayer = (index: number) =>
@@ -110,6 +122,22 @@ export function SetupForm() {
     setCategoryPreferences(categories);
   }, [categories, setCategoryPreferences]);
 
+  useEffect(() => {
+    setWordSourcePreference(wordSource);
+  }, [wordSource, setWordSourcePreference]);
+
+  useEffect(() => {
+    if (!aiEnabled && wordSource === "ai") {
+      setWordSource("files");
+    }
+  }, [aiEnabled, wordSource]);
+
+  useEffect(() => {
+    if (wordSource === "files" && categories.length > 0) {
+      setCategories([]);
+    }
+  }, [wordSource, categories.length]);
+
   const { refetch, isFetching } = useQuery({
     queryKey: ["wordSet", categories, wordSource, recentPairs, aiPrompt],
     queryFn: async () => {
@@ -118,12 +146,14 @@ export function SetupForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           categories,
-          source: wordSource,
+          source: aiEnabled ? wordSource : "files",
           excludePairs: recentPairs.slice(0, 12),
-          prompt: wordSource === "ai" ? aiPrompt.trim() : undefined,
+          prompt: aiEnabled && wordSource === "ai" ? aiPrompt.trim() : undefined,
         }),
       });
-      if (!res.ok) throw new Error("Failed to fetch words");
+      if (!res.ok) {
+        throw new Error("Failed to fetch words");
+      }
       return res.json();
     },
     enabled: false,
@@ -138,10 +168,26 @@ export function SetupForm() {
       return;
     }
 
+    let started = false;
     try {
-      const { data: wordSet } = await refetch();
+      setIsStarting(true);
+      const startTime = Date.now();
+      const { data } = await refetch();
+      const wordSet = data as (WordSet & {
+        meta?: { source?: string; fallback?: boolean; error?: string };
+      }) | undefined;
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 2000) {
+        await new Promise((resolve) => setTimeout(resolve, 2000 - elapsed));
+      }
       if (!wordSet) {
         setError("Failed to fetch words. Please check your connection.");
+        push({
+          title: "Request Failed",
+          description: "Failed to fetch words. Please check your connection.",
+          variant: "destructive",
+        });
+        setIsStarting(false);
         return;
       }
 
@@ -158,13 +204,32 @@ export function SetupForm() {
       wordSet.undercover.forEach((undercover) => {
         addRecentPair(makePairKey(wordSet.civilian.word, undercover.word));
       });
+      if (wordSet.meta?.fallback) {
+        push({
+          title: "AI Fallback",
+          description:
+            wordSet.meta.error ??
+            "AI generation failed. Using file-based words instead.",
+        });
+      }
+      started = true;
     } catch (error) {
       console.error(error);
       setError("An unexpected error occurred.");
+      push({
+        title: "Unexpected Error",
+        description: "Something went wrong while starting the game.",
+        variant: "destructive",
+      });
+      setIsStarting(false);
+    } finally {
+      if (!started) {
+        setIsStarting(false);
+      }
     }
   };
 
-  if (isFetching) {
+  if (isFetching || isStarting) {
     return (
       <div className="flex flex-col gap-6 w-full max-w-3xl mx-auto p-2 sm:p-4">
         <Card className="min-h-[400px] flex items-center justify-center dossier-panel">
@@ -302,73 +367,6 @@ export function SetupForm() {
             </div>
           </div>
 
-          {/* Categories */}
-          <div className="space-y-3 pt-4 border-t border-dashed">
-            <Label className="text-base font-semibold uppercase tracking-wider">
-              Categories (optional)
-            </Label>
-            <p className="text-xs text-muted-foreground">
-              Add one or more categories to guide the word set (e.g. food,
-              movies, travel).
-            </p>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Input
-                placeholder="Add a category"
-                value={categoryInput}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value.includes(",")) {
-                    const parts = value.split(",");
-                    const pending = parts.pop() ?? "";
-                    addCategories(parts);
-                    setCategoryInput(pending.trimStart());
-                  } else {
-                    setCategoryInput(value);
-                  }
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addCategory();
-                  }
-                  if (e.key === ",") {
-                    e.preventDefault();
-                    addCategory();
-                  }
-                }}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                className="uppercase tracking-wider"
-                onClick={addCategory}
-              >
-                Add
-              </Button>
-            </div>
-            {categories.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {categories.map((category) => (
-                  <Badge
-                    key={category}
-                    variant="secondary"
-                    className="flex items-center gap-2 uppercase tracking-wider text-[10px]"
-                  >
-                    <span>{category}</span>
-                    <button
-                      type="button"
-                      className="text-muted-foreground hover:text-foreground"
-                      onClick={() => removeCategory(category)}
-                      aria-label={`Remove ${category}`}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-
           {/* Word Source */}
           <div className="space-y-3 pt-4 border-t border-dashed">
             <Label className="text-base font-semibold uppercase tracking-wider">
@@ -383,6 +381,7 @@ export function SetupForm() {
                 variant={wordSource === "ai" ? "default" : "outline"}
                 className="uppercase tracking-wider"
                 onClick={() => setWordSource("ai")}
+                disabled={!aiEnabled}
               >
                 AI
               </Button>
@@ -395,8 +394,78 @@ export function SetupForm() {
                 Files
               </Button>
             </div>
-            {wordSource === "ai" && (
+            {!aiEnabled && (
+              <p className="text-xs text-muted-foreground">
+                AI features are currently disabled for this environment.
+              </p>
+            )}
+            {aiEnabled && wordSource === "ai" && (
               <div className="space-y-2">
+                <div className="space-y-2">
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                    Categories (optional)
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Add one or more categories to guide the word set (e.g. food,
+                    movies, travel).
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Input
+                      placeholder="Add a category"
+                      value={categoryInput}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value.includes(",")) {
+                          const parts = value.split(",");
+                          const pending = parts.pop() ?? "";
+                          addCategories(parts);
+                          setCategoryInput(pending.trimStart());
+                        } else {
+                          setCategoryInput(value);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addCategory();
+                        }
+                        if (e.key === ",") {
+                          e.preventDefault();
+                          addCategory();
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="uppercase tracking-wider"
+                      onClick={addCategory}
+                    >
+                      Add
+                    </Button>
+                  </div>
+                  {categories.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {categories.map((category) => (
+                        <Badge
+                          key={category}
+                          variant="secondary"
+                          className="flex items-center gap-2 uppercase tracking-wider text-[10px]"
+                        >
+                          <span>{category}</span>
+                          <button
+                            type="button"
+                            className="text-muted-foreground hover:text-foreground"
+                            onClick={() => removeCategory(category)}
+                            aria-label={`Remove ${category}`}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <Button
                   type="button"
                   variant="ghost"
@@ -424,7 +493,7 @@ export function SetupForm() {
           <Button
             className="w-full text-lg h-12 uppercase tracking-widest"
             onClick={handleStart}
-            disabled={!isValid || isFetching}
+            disabled={!isValid || isFetching || isStarting}
           >
             Start Mission
           </Button>
