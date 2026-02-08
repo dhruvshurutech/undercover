@@ -24,6 +24,11 @@ interface GameState {
   civilianWord: WordDef | null;
   undercoverWord: WordDef | null;
   winner: "Civilians" | "Infiltrators" | "MrWhite" | null;
+  recentPairs: string[];
+  aiPreferences: {
+    prompt: string;
+  };
+  categoryPreferences: string[];
 
   // Actions
   setPhase: (phase: GamePhase) => void;
@@ -32,6 +37,9 @@ interface GameState {
     settings: GameSettings,
     wordSet: WordSet,
   ) => void;
+  addRecentPair: (pairKey: string) => void;
+  setAiPreferences: (prefs: { prompt: string }) => void;
+  setCategoryPreferences: (categories: string[]) => void;
   eliminatePlayer: (playerId: string) => void;
   nextTurn: () => void;
   startNextRound: () => void;
@@ -58,6 +66,11 @@ export const useGameStore = create<GameState>()(
       civilianWord: null,
       undercoverWord: null,
       winner: null,
+      recentPairs: [],
+      aiPreferences: {
+        prompt: "",
+      },
+      categoryPreferences: [],
 
       setPhase: (phase) => set({ phase }),
 
@@ -81,6 +94,24 @@ export const useGameStore = create<GameState>()(
           winner: null,
         });
       },
+
+      addRecentPair: (pairKey) =>
+        set((state) => {
+          const next = [pairKey, ...state.recentPairs.filter((p) => p !== pairKey)];
+          return { recentPairs: next.slice(0, 20) };
+        }),
+
+      setAiPreferences: (prefs) =>
+        set((state) => ({
+          aiPreferences: {
+            prompt: prefs.prompt ?? state.aiPreferences.prompt,
+          },
+        })),
+
+      setCategoryPreferences: (categories) =>
+        set({
+          categoryPreferences: categories,
+        }),
 
       eliminatePlayer: (playerId) => {
         const { players, currentTurnIndex } = get();

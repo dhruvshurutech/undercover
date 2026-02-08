@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -28,9 +29,20 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useGameStore } from "@/lib/store";
 import { LoadingScreen } from "./LoadingScreen";
+import { makePairKey } from "@/lib/words";
 
 export function SetupForm() {
   const startGame = useGameStore((state) => state.startGame);
+  const recentPairs = useGameStore((state) => state.recentPairs);
+  const addRecentPair = useGameStore((state) => state.addRecentPair);
+  const aiPreferences = useGameStore((state) => state.aiPreferences);
+  const setAiPreferences = useGameStore((state) => state.setAiPreferences);
+  const categoryPreferences = useGameStore(
+    (state) => state.categoryPreferences,
+  );
+  const setCategoryPreferences = useGameStore(
+    (state) => state.setCategoryPreferences,
+  );
 
   const storedPlayers = useGameStore((state) => state.players);
   const [players, setPlayers] = useState<string[]>(
@@ -40,8 +52,11 @@ export function SetupForm() {
   const [mrWhiteCount, setMrWhiteCount] = useState(0);
   const [blindMode, setBlindMode] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<string[]>(categoryPreferences);
   const [categoryInput, setCategoryInput] = useState("");
+  const [wordSource, setWordSource] = useState<"ai" | "files">("ai");
+  const [aiPrompt, setAiPrompt] = useState(aiPreferences.prompt);
+  const [showPrompt, setShowPrompt] = useState(false);
 
   const addPlayer = () => setPlayers([...players, ""]);
   const removePlayer = (index: number) =>
@@ -87,18 +102,27 @@ export function SetupForm() {
     }
   }, [playerCount, undercoverCount, mrWhiteCount]);
 
+  useEffect(() => {
+    setAiPreferences({ prompt: aiPrompt });
+  }, [aiPrompt, setAiPreferences]);
+
+  useEffect(() => {
+    setCategoryPreferences(categories);
+  }, [categories, setCategoryPreferences]);
+
   const { refetch, isFetching } = useQuery({
-    queryKey: ["wordSet", categories],
+    queryKey: ["wordSet", categories, wordSource, recentPairs, aiPrompt],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (categories.length > 0) {
-        params.set("categories", categories.join(","));
-      }
-      const url =
-        params.toString().length > 0
-          ? `/api/word-set?${params.toString()}`
-          : "/api/word-set";
-      const res = await fetch(url);
+      const res = await fetch("/api/word-set", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          categories,
+          source: wordSource,
+          excludePairs: recentPairs.slice(0, 12),
+          prompt: wordSource === "ai" ? aiPrompt.trim() : undefined,
+        }),
+      });
       if (!res.ok) throw new Error("Failed to fetch words");
       return res.json();
     },
@@ -131,6 +155,9 @@ export function SetupForm() {
         },
         wordSet,
       );
+      wordSet.undercover.forEach((undercover) => {
+        addRecentPair(makePairKey(wordSet.civilian.word, undercover.word));
+      });
     } catch (error) {
       console.error(error);
       setError("An unexpected error occurred.");
@@ -338,6 +365,57 @@ export function SetupForm() {
                     </button>
                   </Badge>
                 ))}
+              </div>
+            )}
+          </div>
+
+          {/* Word Source */}
+          <div className="space-y-3 pt-4 border-t border-dashed">
+            <Label className="text-base font-semibold uppercase tracking-wider">
+              Word Source
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Choose between AI-generated words or curated file-based pairs.
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                type="button"
+                variant={wordSource === "ai" ? "default" : "outline"}
+                className="uppercase tracking-wider"
+                onClick={() => setWordSource("ai")}
+              >
+                AI
+              </Button>
+              <Button
+                type="button"
+                variant={wordSource === "files" ? "default" : "outline"}
+                className="uppercase tracking-wider"
+                onClick={() => setWordSource("files")}
+              >
+                Files
+              </Button>
+            </div>
+            {wordSource === "ai" && (
+              <div className="space-y-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="justify-between w-full uppercase tracking-wider text-xs"
+                  onClick={() => setShowPrompt((prev) => !prev)}
+                >
+                  Custom Prompt (optional)
+                  <span className="text-muted-foreground">
+                    {showPrompt ? "Hide" : "Show"}
+                  </span>
+                </Button>
+                {showPrompt && (
+                  <Textarea
+                    value={aiPrompt}
+                    onChange={(e) => setAiPrompt(e.target.value)}
+                    placeholder="Add extra instructions for the AI..."
+                    className="min-h-[90px]"
+                  />
+                )}
               </div>
             )}
           </div>

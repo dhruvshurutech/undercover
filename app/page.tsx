@@ -151,7 +151,7 @@ export default function Home() {
           </div>
         </header>
 
-        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 flex-1 flex flex-col justify-center relative">
+        <div className="w-full max-w-4xl mx-auto my-4 px-4 sm:px-6 flex-1 flex flex-col justify-center relative">
           <AnimatePresence mode="wait">
             <motion.div
               key={`wipe-${phase}`}

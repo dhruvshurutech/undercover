@@ -119,7 +119,7 @@ export function GameRound() {
       </div>
 
       <motion.div
-        className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-3xl"
+        className="grid grid-cols-2 gap-2 w-full max-w-3xl"
         initial="hidden"
         animate="visible"
         variants={{
@@ -147,12 +147,12 @@ export function GameRound() {
               className="cursor-pointer dossier-panel transition-colors border-2 border-transparent hover:border-primary/50"
               onClick={() => handlePlayerClick(player.id)}
             >
-              <CardContent className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{player.avatar}</span>
-                  <span className="font-semibold text-lg">{player.name}</span>
+              <CardContent className="flex items-center justify-between p-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">{player.avatar}</span>
+                  <span className="font-semibold text-sm">{player.name}</span>
                 </div>
-                <Eye className="h-5 w-5 text-muted-foreground" />
+                <Eye className="h-4 w-4 text-muted-foreground" />
               </CardContent>
             </Card>
           </motion.div>

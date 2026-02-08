@@ -1,175 +1,654 @@
-export type WordDef = {
-  word: string;
-  description: string;
-};
+import { WordDef, WordSet, makePairKey } from "@/lib/words";
 
-export type WordSet = {
-  civilian: WordDef;
-  undercover: WordDef[]; // Array for multiple undercover variations
-  categories?: string[];
-};
-
-const WORD_SETS: WordSet[] = [
-  {
-    civilian: {
-      word: "Tea",
-      description:
-        "A hot drink made by infusing dried crushed leaves in boiling water.",
-    },
-    categories: ["drinks", "beverages"],
-    undercover: [
-      {
-        word: "Coffee",
-        description:
-          "A hot drink made from the roasted and ground seeds (beans) of a tropical shrub.",
-      },
-      {
-        word: "Matcha",
-        description:
-          "Finely ground powder of specially grown and processed green tea leaves.",
-      },
-      {
-        word: "Chai",
-        description:
-          "A tea beverage made by boiling black tea in milk and water with a mixture of aromatic herbs and spices.",
-      },
-    ],
-  },
-  {
-    civilian: {
-      word: "Facebook",
-      description:
-        "A social networking site that makes it easy to connect and share with family and friends.",
-    },
-    categories: ["social media", "technology"],
-    undercover: [
-      {
-        word: "Twitter",
-        description:
-          "A social networking service on which users post and interact with messages known as 'tweets'.",
-      },
-      {
-        word: "Instagram",
-        description: "A photo and video sharing social networking service.",
-      },
-      {
-        word: "LinkedIn",
-        description: "A business and employment-oriented online service.",
-      },
-    ],
-  },
-  {
-    civilian: {
-      word: "Apple",
-      description: "A round fruit with red or green skin and a whitish inside.",
-    },
-    categories: ["fruit", "food"],
-    undercover: [
-      {
-        word: "Orange",
-        description:
-          "A round juicy citrus fruit with a tough bright reddish-yellow rind.",
-      },
-      {
-        word: "Pear",
-        description:
-          "A yellowish- or brownish-green edible fruit that is typically narrow at the stalk and wider towards the base.",
-      },
-      {
-        word: "Mango",
-        description:
-          "A fleshy, oval, yellowish-red tropical fruit that is eaten ripe or used green for pickles or chutneys.",
-      },
-    ],
-  },
-  {
-    civilian: {
-      word: "Sun",
-      description: "The star around which the earth orbits.",
-    },
-    categories: ["space", "astronomy"],
-    undercover: [
-      {
-        word: "Moon",
-        description:
-          "The natural satellite of the earth, visible (chiefly at night) by reflected light from the sun.",
-      },
-      {
-        word: "Star",
-        description:
-          "A fixed luminous point in the night sky which is a large, remote incandescent body like the sun.",
-      },
-      {
-        word: "Planet",
-        description:
-          "A celestial body moving in an elliptical orbit around a star.",
-      },
-    ],
-  },
-  {
-    civilian: {
-      word: "Train",
-      description:
-        "A series of railway carriages or wagons moved as a unit by a locomotive.",
-    },
-    categories: ["transportation", "travel"],
-    undercover: [
-      {
-        word: "Subway",
-        description: "An underground electric railroad.",
-      },
-      {
-        word: "Bus",
-        description: "A large motor vehicle carrying passengers by road.",
-      },
-      {
-        word: "Tram",
-        description:
-          "A passenger vehicle powered by electricity conveyed by overhead cables, and running on rails laid in a public road.",
-      },
-    ],
-  },
-  {
-    civilian: {
-      word: "Guitar",
-      description:
-        "A stringed musical instrument, with a fretted fingerboard, typically incurved sides, and six or twelve strings, played by plucking or strumming.",
-    },
-    categories: ["music", "instruments"],
-    undercover: [
-      {
-        word: "Violin",
-        description:
-          "A stringed musical instrument of treble pitch, played with a horsehair bow.",
-      },
-      {
-        word: "Ukulele",
-        description: "A small four-stringed guitar of Hawaiian origin.",
-      },
-      {
-        word: "Cello",
-        description:
-          "A bass instrument of the violin family, held upright on the floor between the legs of the seated player.",
-      },
-    ],
-  },
+const rawWordSets = [
+    ['Dog', 'Cat'],
+    ['Pizza', 'Burger'],
+    ['Beach', 'Mountain'],
+    ['Coffee', 'Tea'],
+    ['Car', 'Bus'],
+    ['Sun', 'Moon'],
+    ['Banana', 'Apple'],
+    ['Perfume', 'Deodorant'],
+    ['Adidas', 'Nike'],
+    ['backpack', 'suitcase'],
+    ['jacuzzi', 'sauna'],
+    ['sneakers', 'sandals'],
+    ['sunglasses', 'eyeglasses'],
+    ['piano', 'guitar'],
+    ['cruise', 'safari'],
+    ['sushi', 'pizza'],
+    ['hamburger', 'hotdog'],
+    ['chocolate', 'vanilla'],
+    ['beer', 'wine'],
+    ['whiskey', 'vodka'],
+    ['milk', 'juice'],
+    ['bread', 'butter'],
+    ['rice', 'pasta'],
+    ['chicken', 'beef'],
+    ['apple', 'orange'],
+    ['banana', 'strawberry'],
+    ['carrot', 'broccoli'],
+    ['potato', 'tomato'],
+    ['onion', 'garlic'],
+    ['salt', 'pepper'],
+    ['sugar', 'honey'],
+    ['water', 'soda'],
+    ['Apple', 'Microsoft'],
+    ['Google', 'Facebook'],
+    ['Amazon', 'Netflix'],
+    ['Pancake', 'Doughnut'],
+    ['Ice cream', 'Cake'],
+    ['McDonalds', 'KFC'],
+    ['Car', 'Bike'],
+    ['virus', 'bacteria'],
+    ['Lord of the rings', 'Hobbit'],
+    ['Harry Potter', 'Lord Voldemort'],
+    ['Superman', 'Batman'],
+    ['Spiderman', 'Ironman'],
+    ['Captain America', 'Thor'],
+    ['Pizza', 'Pasta'],
+    ['Football', 'Basketball'],
+    ['Music', 'Dancing'],
+    ['Dog', 'Wolf'],
+    ['Apple', 'Pear'],
+    ['Car', 'Truck'],
+    ['Pencil', 'Pen'],
+    ['Pizza', 'Lasagna'],
+    ['Facebook', 'Instagram'],
+    ['Sunglasses', 'Goggles'],
+    ['Laptop', 'Tablet'],
+    ['Doctor', 'Surgeon'],
+    ['Bitcoin', 'Ethereum'],
+    ['Watch', 'Ring'],
+    ['Bomb', 'Gun'],
+    ['Einstein', 'Newton'],
+    ['Shirt', 'Sweater'],
+    ['Soccer', 'Rugby'],
+    ['Plane', 'Helicopter'],
+    ['River', 'Lake'],
+    ['Ocean', 'River'],
+    ['Teacher', 'Professor'],
+    ['Bicycle', 'Motorcycle'],
+    ['Salt', 'Sugar'],
+    ['Knife', 'Scissors'],
+    ['Chair', 'Bench'],
+    ['Castle', 'House'],
+    ['Train', 'Bus'],
+    ['Mirror', 'window pane'],
+    ['Mouse', 'Rat'],
+    ['Cucumber', 'Zucchini'],
+    ['Strawberry', 'Raspberry'],
+    ['Banana', 'Plantain'],
+    ['Coconut', 'Pineapple'],
+    ['Dragon', 'Dinosaur'],
+    ['Ghost', 'Zombie'],
+    ['Chef', 'Kitchen counter'],
+    ['Shovel', 'Axe'],
+    ['Pyramid', 'Temple'],
+    ['Volcano', 'Mountain'],
+    ['Desert', 'Sand'],
+    ['Cloud', 'Fog'],
+    ['Snow', 'Hail'],
+    ['Detective', 'Criminal'],
+    ['Jungle', 'Forest'],
+    ['Clock', 'Watch'],
+    ['Bread', 'Toast'],
+    ['Painting', 'Sketch'],
+    ['Umbrella', 'Parasol'],
+    ['Suit', 'necktie'],
+    ['Socks', 'Stockings'],
+    ['Belt', 'Jeans'],
+    ['Crown', 'Hat'],
+    ['Ballet', 'Hip Hop'],
+    ['Parrot', 'Crow'],
+    ['Bat', 'Owl'],
+    ['Candle', 'Lantern'],
+    ['Library', 'University'],
+    ['Museum', 'Gallery'],
+    ['Radio', 'Podcast'],
+    ['online news', 'Newspaper'],
+    ['Pen', 'Paper'],
+    ['Moon', 'Sun'],
+    ['Tennis', 'Badminton'],
+    ['Skiing', 'Snow'],
+    ['Swimming', 'Diving'],
+    ['Running', 'Jogging'],
+    ['Elevator', 'Escalator'],
+    ['Ferry', 'Cruise'],
+    ['Map', 'GPS'],
+    ['Sailboat', 'Yacht'],
+    ['Meteor', 'Satellite'],
+    ['Planet', 'Star'],
+    ['Earthquake', 'Tsunami'],
+    ['Jellyfish', 'Octopus'],
+    ['Wolf', 'Fox'],
+    ['Hawk', 'Vulture'],
+    ['Lizard', 'Gecko'],
+    ['Elvis', 'The Beatles'],
+    ['Leonardo da Vinci', 'Michelangelo'],
+    ['Napoleon', 'Caesar'],
+    ['Mario', 'Luigi'],
+    ['Sonic', 'Tails'],
+    ['Pac-Man', 'Tetris'],
+    ['Fortnite', 'Minecraft'],
+    ['Call of Duty', 'Battlefield'],
+    ['Game of Thrones', 'Lord of the Rings'],
+    ['Star Wars', 'Star Trek'],
+    ['Harry Potter', 'Percy Jackson'],
+    ['Sherlock Holmes', 'Hercule Poirot'],
+    ['Dracula', 'Frankenstein'],
+    ['James Bond', 'Secret Service'],
+    ['Homer Simpson', 'Peter Griffin'],
+    ['SpongeBob', 'Patrick'],
+    ['Godzilla', 'King Kong'],
+    ['Lego', 'Playmobil'],
+    ['UNO', 'Monopoly'],
+    ['Catan', 'Risk'],
+    ['Blackjack', 'Poker'],
+    ['Bingo', 'Roulette'],
+    ['New York', 'Los Angeles'],
+    ['Paris', 'London'],
+    ['Rome', 'Athens'],
+    ['Sydney', 'Melbourne'],
+    ['Rio de Janeiro', 'Buenos Aires'],
+    ['Mount Everest', 'Nepal'],
+    ['Amazon', 'Nile'],
+    ['Grand Canyon', 'Niagara Falls'],
+    ['Taj Mahal', 'Great Wall of China'],
+    ['Eiffel Tower', 'Statue of Liberty'],
+    ['Big Ben', 'Leaning Tower of Pisa'],
+    ['Olympics', 'World Cup'],
+    ['NBA', 'NFL'],
+    ['Golf', 'Cricket'],
+    ['UFC', 'WWE'],
+    ['Twitch', 'Netflix'],
+    ['Twitter', 'Facebook'],
+    ['SpaceX', 'Tesla'],
+    ['Burger King', 'McDonald’s'],
+    ['Sony', 'Samsung'],
+    ['Mercedes', 'BMW'],
+    ['Harvard', 'MIT'],
+    ['Oxford', 'Highschool'],
+    ['CIA', 'FBI'],
+    ['Hitler', 'Stalin'],
+    ['Tesla', 'Porsche'],
+    ['iPhone', 'Samsung'],
+    ['PlayStation', 'Xbox'],
+    ['Windows', 'MacOS'],
+    ['YouTube', 'TikTok'],
+    ['Twitch', 'Kick'],
+    ['Spotify', 'Apple Music'],
+    ['Reddit', 'Discord'],
+    ['Instagram', 'Snapchat'],
+    ['ChatGPT', 'Gemini'],
+    ['Clock', 'Sundial'],
+    ['Laptop', 'Desktop'],
+    ['Shark', 'Dolphin'],
+    ['Penguin', 'Seagull'],
+    ['Moon', 'Planet'],
+    ['Comet', 'Asteroid'],
+    ['Bridge', 'Tunnel'],
+    ['Bus', 'Tram'],
+    ['Train', 'Monorail'],
+    ['Boat', 'Submarine'],
+    ['Notebook', 'Diary'],
+    ['Spoon', 'Fork'],
+    ['Plate', 'Bowl'],
+    ['Fountain', 'Waterfall'],
+    ['Lake', 'Pond'],
+    ['Giraffe', 'Zebra'],
+    ['Elephant', 'Rhino'],
+    ['Alligator', 'Crocodile'],
+    ['Oyster', 'Clam'],
+    ['Gold', 'Silver'],
+    ['Platinum', 'Gold'],
+    ['Denim', 'Corduroy'],
+    ['Jacket', 'Coat'],
+    ['Scarf', 'Tie'],
+    ['Boots', 'Sneakers'],
+    ['Helmet', 'Hat'],
+    ['Necklace', 'Bracelet'],
+    ['Ring', 'Earring'],
+    ['Microphone', 'Speaker'],
+    ['Headphones', 'Earbuds'],
+    ['Television', 'Radio'],
+    ['Projector', 'Screen'],
+    ['Calculator', 'Typewriter'],
+    ['Flashlight', 'Lantern'],
+    ['Tent', 'Cabin'],
+    ['Compass', 'Map'],
+    ['Boarding pass', 'ID card'],
+    ['Ticket', 'Invoice'],
+    ['Passport', 'Ticket'],
+    ['Subway', 'Taxi'],
+    ['Sky', 'Jet'],
+    ['Motorcycle', 'Scooter'],
+    ['Surfboard', 'Skateboard'],
+    ['Baseball', 'Football'],
+    ['Volleyball', 'Basketball'],
+    ['Table tennis', 'Badminton'],
+    ['Bakery', 'Butcher'],
+    ['Puzzle', 'Crossword'],
+    ['Cards', 'Dice'],
+    ['Bowling', 'Golf'],
+    ['Marathon', 'Sprint'],
+    ['Fencing', 'Archery'],
+    ['Boxing', 'Karate'],
+    ['Hockey', 'Soccer'],
+    ['Concert', 'Festival'],
+    ['Novel', 'Poem'],
+    ['Dictionary', 'Encyclopedia'],
+    ['Pharmacist', 'Doctor'],
+    ['Engineer', 'Architect'],
+    ['Firefighter', 'Policeman'],
+    ['Germany', 'France'],
+    ['Pilot', 'Astronaut'],
+    ['Judge', 'Punishment'],
+    ['Baker', 'Chef'],
+    ['Farmer', 'Fisherman'],
+    ['Blacksmith', 'Carpenter'],
+    ['Heaven', 'Hell'],
+    ['Sky', 'Clouds'],
+    ['Japan', 'China'],
+    ['Germany', 'Beer'],
+    ['Movie', 'Actor'],
+    ['Screen', 'TV'],
+    ['France', 'Eiffel Tower'],
+    ['Thor', 'Lightning'],
+    ['Obi Wan', 'Force'],
+    ['UFO', 'Drones'],
+    ['God', 'Heaven'],
+    ['Tortilla', 'Taco'],
+    ['Baguette', 'Ciabatta'],
+    ['Hot Dog', 'Bratwurst'],
+    ['Energy Drink', 'Soda'],
+    ['Coconut milk', 'soy milk'],
+    ['Picasso', 'Van Gogh'],
+    ['Mozart', 'Beethoven'],
+    ['Messi', 'Ronaldo'],
+    ['Bayern Munich', 'Real Madrid'],
+    ['Ferrari', 'Lamborghini'],
+    ['Coca-Cola', 'Pepsi'],
+    ['London', 'Paris'],
+    ['Los Angeles', 'New York'],
+    ['Big Ben', 'Leaning Tower of Pisa'],
+    ['Statue of Liberty', 'Eiffel Tower'],
+    ['Mouse', 'Keyboard'],
+    ['TV', 'Laptop'],
+    ['Wardrobe', 'Showcase'],
+    ['Birch', 'Shrub'],
+    ['Radiator', 'Hairdryer'],
+    ['Lamp', 'Candle'],
+    ['Pillow', 'Blanket'],
+    ['Microphone', 'Camera'],
+    ['Oven', 'Microwave'],
+    ['Pan', 'Pot'],
+    ['Tablet', 'Smartphone'],
+    ['Stairs', 'Elevator'],
+    ['Techno', 'Rap'],
+    ['Rock', 'Pop'],
+    ['Table Tennis', 'Badminton'],
+    ['Window', 'Door'],
+    ['Oven', 'Heating'],
+    ['Wristwatch', 'Alarm Clock'],
+    ['Bed', 'Sofa'],
+    ['Book', 'Newspaper'],
+    ['Forest', 'Park'],
+    ['Cinema', 'Bowling'],
+    ['Netflix', 'Cinema'],
+    ['Swimming Pool', 'Beach'],
+    ['Glass', 'Cup'],
+    ['Job', 'Hobby'],
+    ['Jesus', 'Santa Claus'],
+    ['bra', 'bikini'],
 ];
+
+const foodKeywords = [
+  "pizza",
+  "burger",
+  "sushi",
+  "pasta",
+  "bread",
+  "butter",
+  "rice",
+  "chicken",
+  "beef",
+  "apple",
+  "orange",
+  "banana",
+  "strawberry",
+  "carrot",
+  "broccoli",
+  "potato",
+  "tomato",
+  "onion",
+  "garlic",
+  "salt",
+  "pepper",
+  "sugar",
+  "honey",
+  "pancake",
+  "doughnut",
+  "ice cream",
+  "cake",
+  "chocolate",
+  "vanilla",
+  "hot dog",
+  "taco",
+  "tortilla",
+  "baguette",
+  "ciabatta",
+  "bratwurst",
+];
+
+const drinkKeywords = [
+  "coffee",
+  "tea",
+  "beer",
+  "wine",
+  "whiskey",
+  "vodka",
+  "milk",
+  "juice",
+  "soda",
+  "coca-cola",
+  "pepsi",
+  "energy drink",
+  "soy milk",
+  "coconut milk",
+];
+
+const animalKeywords = [
+  "dog",
+  "cat",
+  "wolf",
+  "fox",
+  "mouse",
+  "rat",
+  "parrot",
+  "crow",
+  "bat",
+  "owl",
+  "jellyfish",
+  "octopus",
+  "shark",
+  "dolphin",
+  "penguin",
+  "seagull",
+  "giraffe",
+  "zebra",
+  "elephant",
+  "rhino",
+  "alligator",
+  "crocodile",
+  "oyster",
+  "clam",
+  "lizard",
+  "gecko",
+];
+
+const vehicleKeywords = [
+  "car",
+  "bus",
+  "train",
+  "tram",
+  "subway",
+  "taxi",
+  "boat",
+  "submarine",
+  "plane",
+  "helicopter",
+  "bicycle",
+  "motorcycle",
+  "scooter",
+  "yacht",
+  "sailboat",
+  "truck",
+  "monorail",
+];
+
+const sportGameKeywords = [
+  "football",
+  "basketball",
+  "soccer",
+  "rugby",
+  "tennis",
+  "badminton",
+  "golf",
+  "cricket",
+  "ufc",
+  "wwe",
+  "hockey",
+  "boxing",
+  "karate",
+  "fencing",
+  "archery",
+  "marathon",
+  "sprint",
+  "bingo",
+  "roulette",
+  "poker",
+  "blackjack",
+  "uno",
+  "monopoly",
+  "catan",
+  "risk",
+  "fortnite",
+  "minecraft",
+  "tetris",
+  "pac-man",
+];
+
+const musicArtKeywords = [
+  "piano",
+  "guitar",
+  "violin",
+  "ukulele",
+  "cello",
+  "music",
+  "dancing",
+  "ballet",
+  "hip hop",
+  "painting",
+  "sketch",
+  "concert",
+  "festival",
+  "movie",
+  "cinema",
+  "film",
+  "radio",
+  "podcast",
+];
+
+const techKeywords = [
+  "laptop",
+  "desktop",
+  "tablet",
+  "smartphone",
+  "iphone",
+  "android",
+  "windows",
+  "macos",
+  "youtube",
+  "tiktok",
+  "spotify",
+  "discord",
+  "reddit",
+  "instagram",
+  "facebook",
+  "twitter",
+  "netflix",
+  "twitch",
+  "tesla",
+  "spacex",
+  "playstation",
+  "xbox",
+  "chatgpt",
+  "gemini",
+  "bitcoin",
+  "ethereum",
+];
+
+const placeKeywords = [
+  "paris",
+  "london",
+  "rome",
+  "athens",
+  "sydney",
+  "melbourne",
+  "rio de janeiro",
+  "buenos aires",
+  "new york",
+  "los angeles",
+  "germany",
+  "france",
+  "japan",
+  "china",
+  "amazon",
+  "nile",
+  "grand canyon",
+  "niagara falls",
+  "taj mahal",
+  "great wall of china",
+  "eiffel tower",
+  "statue of liberty",
+  "big ben",
+  "mount everest",
+  "nepal",
+];
+
+const roleKeywords = [
+  "doctor",
+  "surgeon",
+  "teacher",
+  "professor",
+  "engineer",
+  "architect",
+  "firefighter",
+  "policeman",
+  "chef",
+  "baker",
+  "pilot",
+  "astronaut",
+  "detective",
+  "criminal",
+  "judge",
+  "pharmacist",
+  "farmer",
+  "fisherman",
+  "blacksmith",
+  "carpenter",
+];
+
+const brandKeywords = [
+  "adidas",
+  "nike",
+  "apple",
+  "microsoft",
+  "google",
+  "amazon",
+  "netflix",
+  "mcdonald",
+  "kfc",
+  "burger king",
+  "sony",
+  "samsung",
+  "mercedes",
+  "bmw",
+  "harvard",
+  "mit",
+  "oxford",
+  "cia",
+  "fbi",
+];
+
+function describeWord(word: string): string {
+  const lower = word.trim().toLowerCase();
+  const hasOf = lower.includes(" of ");
+  const isTitle =
+    hasOf ||
+    lower.includes("the ") ||
+    lower.includes("lord") ||
+    lower.includes("harry") ||
+    lower.includes("star") ||
+    lower.includes("game of") ||
+    lower.includes("percy") ||
+    lower.includes("sherlock");
+
+  if (foodKeywords.some((k) => lower.includes(k))) {
+    return "A familiar food item people could describe by taste or ingredients.";
+  }
+  if (drinkKeywords.some((k) => lower.includes(k))) {
+    return "A common drink people recognize by flavor or occasion.";
+  }
+  if (animalKeywords.some((k) => lower.includes(k))) {
+    return "An animal commonly recognized by habitat or traits.";
+  }
+  if (vehicleKeywords.some((k) => lower.includes(k))) {
+    return "A mode of transport used to travel or move around.";
+  }
+  if (sportGameKeywords.some((k) => lower.includes(k))) {
+    return "A sport or game people play or watch.";
+  }
+  if (musicArtKeywords.some((k) => lower.includes(k))) {
+    return "A music or arts term people might describe by style or sound.";
+  }
+  if (techKeywords.some((k) => lower.includes(k))) {
+    return "A technology product, platform, or device used in daily life.";
+  }
+  if (placeKeywords.some((k) => lower.includes(k))) {
+    return "A location people might recognize from travel or geography.";
+  }
+  if (roleKeywords.some((k) => lower.includes(k))) {
+    return "A role or profession associated with specific duties.";
+  }
+  if (brandKeywords.some((k) => lower.includes(k))) {
+    return "A well-known brand or organization.";
+  }
+  if (isTitle) {
+    return "A well-known title from books, films, or pop culture.";
+  }
+
+  return "A common everyday concept people can describe in conversation.";
+}
+
+const WORD_SETS: WordSet[] = rawWordSets.map(
+  ([civilianWord, undercoverWord]) => ({
+    civilian: {
+      word: civilianWord,
+      description: describeWord(civilianWord),
+    },
+    undercover: [
+      {
+        word: undercoverWord,
+        description: describeWord(undercoverWord),
+      },
+    ],
+  }),
+);
 
 function normalizeCategory(value: string): string {
   return value.trim().toLowerCase();
 }
 
-export function getStaticWordSet(categories?: string[]): WordSet {
-  if (!categories || categories.length === 0) {
-    const index = Math.floor(Math.random() * WORD_SETS.length);
-    return WORD_SETS[index];
-  }
-
-  const wanted = categories.map(normalizeCategory).filter(Boolean);
+export function getStaticWordSet(
+  categories?: string[],
+  excludePairs?: string[],
+): WordSet {
+  const wanted = categories?.map(normalizeCategory).filter(Boolean);
+  const excluded = new Set(excludePairs ?? []);
   const filtered = WORD_SETS.filter((set) => {
-    if (!set.categories || set.categories.length === 0) return false;
-    const setCategories = set.categories.map(normalizeCategory);
-    return wanted.some((cat) => setCategories.includes(cat));
+    const setCategories =
+      set.categories?.map(normalizeCategory).filter(Boolean) ?? [];
+    const matchesCategory =
+      wanted?.length === 0 ||
+      setCategories.length === 0 ||
+      wanted?.some((cat) => setCategories.includes(cat));
+    if (!matchesCategory) return false;
+    const pairKeys = set.undercover.map((undercover) =>
+      makePairKey(set.civilian.word, undercover.word),
+    );
+    return !pairKeys.some((key) => excluded.has(key));
   });
 
   const pool = filtered.length > 0 ? filtered : WORD_SETS;

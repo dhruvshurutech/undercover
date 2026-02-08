@@ -121,13 +121,13 @@ export function Voting() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-[80vh] w-full p-2 sm:p-4 space-y-6">
+    <div className="flex flex-col items-center justify-start min-h-[80vh] w-full p-2 sm:p-4 space-y-6 bg-secondary/40 border border-border/70 rounded-3xl shadow-[0_18px_60px_rgba(10,10,10,0.18)]">
       <div className="text-center space-y-2">
         <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground">
           Tribunal
         </p>
         <h2 className="text-3xl sm:text-4xl font-[var(--font-display)] tracking-[0.2em] uppercase flex items-center justify-center gap-2">
-          <Gavel className="h-8 w-8" /> Verdict
+          <Gavel className="h-8 w-8 text-amber-600" /> Verdict
         </h2>
         <p className="text-muted-foreground">
           Identify the infiltrator and mark them for removal.
@@ -135,7 +135,7 @@ export function Voting() {
       </div>
 
       <motion.div
-        className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-3xl"
+        className="grid grid-cols-2 gap-2 w-full max-w-3xl"
         initial="hidden"
         animate="visible"
         variants={{
@@ -160,15 +160,15 @@ export function Voting() {
             transition={{ type: "spring", stiffness: 220, damping: 18 }}
           >
             <Card
-              className="cursor-pointer dossier-panel transition-colors border-2 border-transparent hover:border-destructive/50"
+              className="cursor-pointer dossier-panel transition-colors border-2 border-transparent hover:border-amber-600/70 bg-card"
               onClick={() => handleSelect(player)}
             >
-              <CardContent className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{player.avatar}</span>
-                  <span className="font-semibold text-lg">{player.name}</span>
+              <CardContent className="flex items-center justify-between p-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">{player.avatar}</span>
+                  <span className="font-semibold text-sm">{player.name}</span>
                 </div>
-                <Skull className="h-5 w-5 text-destructive" />
+                <Skull className="h-4 w-4 text-amber-600" />
               </CardContent>
             </Card>
           </motion.div>

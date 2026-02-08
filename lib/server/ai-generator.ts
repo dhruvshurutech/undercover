@@ -2,7 +2,7 @@ import { generateObject } from "ai";
 
 import { createOpenAI } from "@ai-sdk/openai";
 import { z } from "zod";
-import { WordSet } from "./words";
+import { WordSet, makePairKey } from "@/lib/words";
 
 // Define the schema for the word set
 const wordSetSchema = z.object({
@@ -24,22 +24,21 @@ const wordSetSchema = z.object({
     .describe("A list of undercover word variations (usually just one or two)"),
 });
 
+function extractJson(text: string): string | null {
+  const fenced = text.match(/```json([\s\S]*?)```/i);
+  if (fenced?.[1]) return fenced[1].trim();
+  const generic = text.match(/```([\s\S]*?)```/i);
+  if (generic?.[1]) return generic[1].trim();
+  const firstBrace = text.indexOf("{");
+  const lastBrace = text.lastIndexOf("}");
+  if (firstBrace >= 0 && lastBrace > firstBrace) {
+    return text.slice(firstBrace, lastBrace + 1).trim();
+  }
+  return null;
+}
+
 // Provider configuration
-const PROVIDERS = [
-  {
-    id: "arcee-ai/trinity-mini:free",
-    name: "Arcee AI Trinity Mini",
-    apiKeyEnvVar: "OPENROUTER_API_KEY",
-    baseURL: "https://openrouter.ai/api/v1",
-    model: "arcee-ai/trinity-mini:free",
-  },
-  {
-    id: "mistralai/mistral-small-3.1-24b-instruct:free",
-    name: "Mistral AI Mistral Small 3.1 24B Instruct",
-    apiKeyEnvVar: "OPENROUTER_API_KEY",
-    baseURL: "https://openrouter.ai/api/v1",
-    model: "mistralai/mistral-small-3.1-24b-instruct:free",
-  },
+const PROVIDERS = [  
   {
     id: "x-ai/grok-4.1-fast",
     name: "x.ai Grox Fast 4.1",
@@ -74,12 +73,27 @@ function normalizeCategory(value: string): string {
   return value.trim().toLowerCase();
 }
 
-export async function generateWordSet(categories?: string[]): Promise<WordSet> {
+export async function generateWordSet(
+  categories?: string[],
+  excludePairs?: string[],
+  customPrompt?: string,
+): Promise<WordSet> {
   const cleanedCategories =
     categories?.map(normalizeCategory).filter(Boolean) ?? [];
+  const excluded = new Set(excludePairs ?? []);
   const categoryLine =
     cleanedCategories.length > 0
       ? `- Category must be within: ${cleanedCategories.join(", ")}.\n`
+      : "";
+  const excludeLine =
+    excludePairs && excludePairs.length > 0
+      ? `- Do NOT use any of these pairs (order-agnostic): ${excludePairs.join(
+          ", ",
+        )}.\n`
+      : "";
+  const customLine =
+    customPrompt && customPrompt.trim().length > 0
+      ? `\nCUSTOM INSTRUCTIONS:\n${customPrompt.trim()}\n`
       : "";
 
   const prompt = `Generate ONE word pair for the party game "Undercover".
@@ -88,11 +102,14 @@ export async function generateWordSet(categories?: string[]): Promise<WordSet> {
   The goal: Undercover words must be similar enough that their clues don't immediately expose them, but different enough that careful players can spot the distinction.
   
   ${categoryLine}
+  ${excludeLine}
   - Related concepts that overlap in descriptions but aren't interchangeable
   - Common, recognizable nouns (not abstract or obscure)
+  - Avoid overused safe pairs (e.g., Piano/Guitar, Tea/Coffee, Apple/Orange)
+  - Prefer fresh, less obvious but still well-known everyday nouns
   - 1-2 words each, no punctuation
   - NOT synonyms, NOT plural/singular variants, NOT the same thing
-  
+
   WHAT MAKES GOOD PAIRS:
   ✓ Share properties/contexts: "Tea/Coffee" (hot beverages, morning drinks)
   ✓ Often compared: "Fanta/Coca-Cola" (orange vs cola sodas)
@@ -116,9 +133,23 @@ export async function generateWordSet(categories?: string[]): Promise<WordSet> {
   - Provide 1-2 alternatives only if they're equally strong and distinct
   - Otherwise just provide 1
 
+  OUTPUT FORMAT (STRICT):
+  - Output ONLY a valid JSON object matching this schema:
+    {
+      "civilian": { "word": string, "description": string },
+      "undercover": [ { "word": string, "description": string } ]
+    }
+  - Do NOT wrap in markdown or code fences.
+  - Do NOT add extra keys like "pair" or "descriptions".
+
+  ${customLine}
   Output only valid JSON matching the schema.`;
 
   let lastError: unknown = null;
+
+  if (PROVIDERS.length === 0) {
+    throw new Error("No AI providers configured.");
+  }
 
   for (const providerConfig of PROVIDERS) {
     const apiKey = process.env[providerConfig.apiKeyEnvVar];
@@ -136,11 +167,27 @@ export async function generateWordSet(categories?: string[]): Promise<WordSet> {
         baseURL: providerConfig.baseURL,
       });
 
-      const result = await generateObject({
-        model: openai(providerConfig.model),
-        schema: wordSetSchema,
-        prompt: prompt,
-      });
+      let result: { object: WordSet };
+      try {
+        result = await generateObject({
+          model: openai(providerConfig.model),
+          schema: wordSetSchema,
+          prompt: prompt,
+        });
+      } catch (error) {
+        const text = (error as { text?: string })?.text;
+        const extracted = text ? extractJson(text) : null;
+        if (!extracted) throw error;
+        const parsed = wordSetSchema.parse(JSON.parse(extracted));
+        result = { object: parsed };
+      }
+
+      const pairKeys = result.object.undercover.map((undercover) =>
+        makePairKey(result.object.civilian.word, undercover.word),
+      );
+      if (pairKeys.some((key) => excluded.has(key))) {
+        throw new Error("Generated pair matches excluded history.");
+      }
 
       console.log(
         `Successfully generated word set using ${providerConfig.name}`,
