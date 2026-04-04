@@ -101,7 +101,8 @@ export async function generateWordSet(
   Players give clues about their word without saying it directly.
   The goal: Undercover words must be similar enough that their clues don't immediately expose them, but different enough that careful players can spot the distinction.
   
-  ${categoryLine}
+  If categories are provided only generate from given category in case no category is provided generate from any category:
+  <categories_provided>${categoryLine ?? ''}</<categories_provided>
   ${excludeLine}
   - Related concepts that overlap in descriptions but aren't interchangeable
   - Common, recognizable nouns (not abstract or obscure)
