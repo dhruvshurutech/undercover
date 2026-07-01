@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Bebas_Neue, IBM_Plex_Sans, JetBrains_Mono } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 import Providers from "./providers";
@@ -65,6 +66,7 @@ export default function RootLayout({
         >
           <Providers>{children}</Providers>
         </ThemeProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
