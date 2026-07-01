@@ -10,6 +10,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ModeToggle } from "@/components/theme-toggle";
+import { RulesDialog } from "@/components/game/RulesDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -106,6 +107,7 @@ export default function Home() {
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+              <RulesDialog />
               {showClock && (
                 <div className="flex items-center gap-2 border border-primary/40 bg-primary/10 px-3 py-1 rounded-full text-[11px] uppercase tracking-[0.2em] shadow-sm">
                   <span className="text-primary/80">Time</span>

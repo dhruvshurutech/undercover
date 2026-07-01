@@ -1,5 +1,5 @@
 import { getStaticWordSet } from "@/lib/server/words";
-import { generateWordSet } from "@/lib/server/ai-generator";
+import { generateWordSet } from "@/lib/server/ai/generate-word-set";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
