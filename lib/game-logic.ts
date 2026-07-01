@@ -31,6 +31,10 @@ export function assignRoles(
     throw new Error("Player count does not match role distribution");
   }
 
+  if (undercoverCount + mrWhiteCount === 0) {
+    throw new Error("At least one Undercover or Mr. White is required");
+  }
+
   // Create an array of roles to shuffle
   const roles: Role[] = [
     ...Array(civilianCount).fill("Civilian"),

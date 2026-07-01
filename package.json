@@ -6,12 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.25",
     "@base-ui/react": "^1.1.0",
     "@ducanh2912/next-pwa": "^10.2.9",
+    "@openrouter/ai-sdk-provider": "2.10.0",
     "@tanstack/react-query": "^5.90.20",
     "ai": "^6.0.71",
     "class-variance-authority": "^0.7.1",
@@ -41,6 +43,8 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
-  }
+    "typescript": "^5",
+    "vitest": "4.1.9"
+  },
+  "packageManager": "pnpm@10.34.4+sha512.8768be55200ae3f2226b6527fcca2687e14bc4e5f12d7721a0f25da3df47915177058648db4177baf348120fa0ba2752d8d8d93f6beaf1fe64ae18da8de961af"
 }
