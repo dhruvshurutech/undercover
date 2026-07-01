@@ -101,11 +101,12 @@ export function SetupForm() {
   const isValid =
     players.every((p) => p.trim().length > 0) &&
     civilianCount > 0 &&
+    undercoverCount + mrWhiteCount > 0 &&
     playerCount >= 3;
 
   useEffect(() => {
     const maxMrWhite = Math.max(0, playerCount - undercoverCount - 1);
-    const maxUndercover = Math.max(1, playerCount - mrWhiteCount - 1);
+    const maxUndercover = Math.max(0, playerCount - mrWhiteCount - 1);
     if (mrWhiteCount > maxMrWhite) {
       setMrWhiteCount(maxMrWhite);
     }
@@ -163,7 +164,7 @@ export function SetupForm() {
   const handleStart = async () => {
     if (!isValid) {
       setError(
-        "Please ensure all fields are valid and you have enough civilians.",
+        "Please ensure all fields are valid: you need at least one Civilian and at least one Undercover or Mr. White.",
       );
       return;
     }
@@ -310,8 +311,8 @@ export function SetupForm() {
               </div>
               <Slider
                 value={[undercoverCount]}
-                min={1}
-                max={Math.max(1, playerCount - mrWhiteCount - 1)}
+                min={0}
+                max={Math.max(0, playerCount - mrWhiteCount - 1)}
                 step={1}
                 onValueChange={(vals) => setUndercoverCount(vals[0])}
               />
@@ -346,6 +347,12 @@ export function SetupForm() {
             {civilianCount <= 0 && (
               <p className="text-xs text-destructive font-medium">
                 Not enough Civilians! Add more players or reduce special roles.
+              </p>
+            )}
+
+            {undercoverCount + mrWhiteCount <= 0 && (
+              <p className="text-xs text-destructive font-medium">
+                Assign at least one Undercover or Mr. White.
               </p>
             )}
 
